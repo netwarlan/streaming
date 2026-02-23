@@ -1,92 +1,586 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset=utf-8 />
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NETWAR LIVE</title>
-  <link rel="stylesheet" href="https://bootswatch.com/4/slate/bootstrap.css">
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/video.js/dist/video-js.css">
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script>
   <style>
-    .card {
-        margin-top: 10px;
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --neon-pink: #ff2a6d;
+      --neon-cyan: #05d9e8;
+      --neon-purple: #d300c5;
+      --chrome-top: #2989cc;
+      --chrome-mid: #d3e5ec;
+      --chrome-bot: #b3628d;
+      --bg-void: #0a0014;
+      --bg-dark: #120025;
+      --bg-surface: rgba(18, 0, 40, 0.7);
+      --text-primary: #f0e6ff;
+      --text-muted: #7a6b8a;
     }
 
-    #vid1 {
-        box-shadow: 0 0 25px #000000;
+    html { font-size: 16px; }
+
+    body {
+      font-family: 'Share Tech Mono', monospace;
+      background: var(--bg-void);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
     }
 
-    div.footer {
-        text-align: center;
+    /* ---- Synthwave Background ---- */
+    .bg-scene {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      background: #0a0014;
     }
 
-    span.red {
-        color: #ff0000;
+    /* Top half: static image */
+    .bg-scene .skyline {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 60%;
+      background: url('img/bg.jpg') center bottom / cover no-repeat;
+    }
+
+    /* Darken overlay on image */
+    .bg-scene .skyline::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(10, 0, 20, 0.3) 0%,
+        rgba(10, 0, 20, 0.1) 60%,
+        rgba(10, 0, 20, 0.6) 100%
+      );
+    }
+
+    /* Neon horizon line at the split */
+    .bg-scene .horizon {
+      position: absolute;
+      top: 60%;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: #ff00ff;
+      box-shadow: 0 0 8px #ff00ff, 0 0 20px rgba(255, 0, 255, 0.5), 0 0 40px rgba(255, 0, 255, 0.2);
+      z-index: 1;
+    }
+
+    /* Bottom half: animated perspective grid */
+    .bg-scene .grid {
+      position: absolute;
+      top: 60%;
+      left: -50%;
+      width: 200%;
+      height: 50%;
+      background-image:
+        repeating-linear-gradient(90deg, rgba(255, 0, 255, 0.4) 0px, transparent 1px, transparent 30px, rgba(255, 0, 255, 0.4) 31px),
+        repeating-linear-gradient(180deg, rgba(255, 0, 255, 0.4) 0px, transparent 1px, transparent 30px, rgba(255, 0, 255, 0.4) 31px);
+      transform: perspective(50vh) rotateX(60deg) translateZ(10px);
+      transform-origin: top center;
+      animation: grid-scroll 0.8s infinite linear;
+    }
+
+    @keyframes grid-scroll {
+      0%   { transform: perspective(50vh) rotateX(60deg) translateZ(10px) translateY(0px); }
+      100% { transform: perspective(50vh) rotateX(60deg) translateZ(10px) translateY(30px); }
+    }
+
+    /* Scanline overlay */
+    .bg-scene .scanlines {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.06) 2px,
+        rgba(0, 0, 0, 0.06) 4px
+      );
+      pointer-events: none;
+    }
+
+    /* ---- Page Content ---- */
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.5rem 0 1rem;
+    }
+
+    .header-title {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 900;
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      background-image: linear-gradient(
+        var(--chrome-top) 0%,
+        var(--chrome-mid) 50%,
+        #592451 51%,
+        var(--chrome-bot) 55%,
+        #592451 59%,
+        var(--chrome-bot) 65%,
+        #ac86a6 75%,
+        var(--chrome-bot) 100%
+      );
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      -webkit-text-stroke-width: 0.5px;
+      -webkit-text-stroke-color: rgba(255, 255, 255, 0.3);
+      filter: drop-shadow(0 0 12px rgba(255, 42, 109, 0.5));
+      letter-spacing: 0.05em;
+    }
+
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      flex-shrink: 0;
+      transition: all 0.3s;
+    }
+
+    .status-dot.live {
+      background: var(--neon-pink);
+      box-shadow: 0 0 8px var(--neon-pink), 0 0 20px rgba(255, 42, 109, 0.4);
+      animation: pulse-dot 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--neon-pink), 0 0 20px rgba(255, 42, 109, 0.4); }
+      50% { opacity: 0.5; box-shadow: 0 0 4px var(--neon-pink); }
+    }
+
+    /* ---- Player ---- */
+    .player-section {
+      margin-top: 0.75rem;
+    }
+
+    .player-wrap {
+      position: relative;
+      border-radius: 4px;
+      overflow: hidden;
+      background: #000;
+      border: 1px solid rgba(255, 42, 109, 0.3);
+      box-shadow:
+        0 0 15px rgba(255, 42, 109, 0.2),
+        0 0 40px rgba(211, 0, 197, 0.1),
+        0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .video-js {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+    }
+
+    .video-js .vjs-big-play-button {
+      background: rgba(255, 42, 109, 0.2);
+      border: 2px solid var(--neon-pink);
+      border-radius: 50%;
+      width: 80px;
+      height: 80px;
+      line-height: 80px;
+      font-size: 2.5rem;
+      top: 50%;
+      left: 50%;
+      margin-top: -40px;
+      margin-left: -40px;
+      transition: all 0.25s;
+      box-shadow: 0 0 20px rgba(255, 42, 109, 0.3);
+    }
+
+    .video-js .vjs-big-play-button:hover {
+      background: rgba(255, 42, 109, 0.35);
+      box-shadow: 0 0 40px rgba(255, 42, 109, 0.5), 0 0 80px rgba(211, 0, 197, 0.2);
+    }
+
+    .video-js .vjs-big-play-button .vjs-icon-placeholder::before {
+      color: var(--neon-pink);
+    }
+
+    .video-js .vjs-control-bar {
+      background: linear-gradient(transparent, rgba(10, 0, 20, 0.95));
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .video-js .vjs-play-progress,
+    .video-js .vjs-volume-level {
+      background: var(--neon-cyan);
+    }
+
+    /* ---- Offline Overlay ---- */
+    .offline-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 0, 20, 0.88);
+      z-index: 10;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s;
+    }
+
+    .offline-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .offline-icon {
+      width: 56px;
+      height: 56px;
+      margin-bottom: 1rem;
+      color: var(--neon-pink);
+      opacity: 0.4;
+      filter: drop-shadow(0 0 8px rgba(255, 42, 109, 0.3));
+    }
+
+    .offline-text {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+    }
+
+    /* ---- Export Panel ---- */
+    .export-section {
+      margin-top: 1rem;
+    }
+
+    .export-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: transparent;
+      border: 1px solid rgba(5, 217, 232, 0.3);
+      color: var(--neon-cyan);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0.45rem 0.9rem;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .export-toggle:hover {
+      border-color: var(--neon-cyan);
+      background: rgba(5, 217, 232, 0.08);
+      box-shadow: 0 0 12px rgba(5, 217, 232, 0.15);
+    }
+
+    .export-toggle svg {
+      width: 12px;
+      height: 12px;
+      transition: transform 0.3s;
+    }
+
+    .export-toggle.open svg {
+      transform: rotate(180deg);
+    }
+
+    .export-panel {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.3s ease;
+    }
+
+    .export-panel.open {
+      grid-template-rows: 1fr;
+    }
+
+    .export-panel-inner {
+      overflow: hidden;
+    }
+
+    .export-urls {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      padding-top: 0.75rem;
+    }
+
+    .url-row {
+      display: flex;
+      align-items: stretch;
+      border: 1px solid rgba(5, 217, 232, 0.2);
+      border-radius: 3px;
+      overflow: hidden;
+      background: rgba(18, 0, 40, 0.6);
+      backdrop-filter: blur(8px);
+    }
+
+    .url-label {
+      display: flex;
+      align-items: center;
+      padding: 0 0.75rem;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--bg-void);
+      background: var(--neon-cyan);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .url-value {
+      flex: 1;
+      padding: 0.55rem 0.75rem;
+      font-size: 0.78rem;
+      color: var(--text-primary);
+      user-select: all;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .url-copy {
+      display: flex;
+      align-items: center;
+      padding: 0 0.75rem;
+      background: rgba(5, 217, 232, 0.06);
+      border: none;
+      border-left: 1px solid rgba(5, 217, 232, 0.2);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .url-copy:hover {
+      background: rgba(5, 217, 232, 0.12);
+      color: var(--neon-cyan);
+    }
+
+    .url-copy.copied {
+      color: var(--neon-cyan);
+      text-shadow: 0 0 8px rgba(5, 217, 232, 0.5);
+    }
+
+    .url-copy svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* ---- Footer ---- */
+    .footer {
+      margin-top: auto;
+      padding: 1.25rem 0;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+    }
+
+    .footer-heart {
+      color: var(--neon-pink);
+      display: inline-block;
+      filter: drop-shadow(0 0 4px rgba(255, 42, 109, 0.5));
+      animation: heartbeat 2s ease-in-out infinite;
+    }
+
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      14% { transform: scale(1.2); }
+      28% { transform: scale(1); }
+      42% { transform: scale(1.15); }
+      56% { transform: scale(1); }
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 600px) {
+      .header-title { font-size: 1.4rem; }
+      .header-status { font-size: 0.7rem; }
+      .url-label { font-size: 0.55rem; padding: 0 0.5rem; }
+      .url-value { font-size: 0.65rem; }
+      .bg-scene .sun { width: 120px; height: 120px; }
     }
   </style>
 </head>
-
 <body>
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-2"></div>
-      <div class="col-md-8 logo-header">
-        <img alt="Netwar Logo" src="https://www.netwar.org/wp-content/uploads/2018/01/Netwar_Logo.png" style="height: 150px;" />
-      </div>
-      <div class="col-md-2"></div>
-    </div>
+  <!-- Synthwave background -->
+  <div class="bg-scene">
+    <div class="skyline"></div>
+    <div class="horizon"></div>
+    <div class="grid"></div>
+    <div class="scanlines"></div>
+  </div>
 
-    <div class="row">
-      <div class="col-md-2"></div>
-      <div class="col-md-8">
+  <div class="page">
+    <header class="header">
+      <div class="header-title">NETWAR LIVE</div>
+      <div class="header-status">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Checking&hellip;</span>
+      </div>
+    </header>
+
+    <main class="player-section">
+      <div class="player-wrap">
         <video-js id="vid1" class="vjs-default-skin vjs-big-play-centered" poster="video/streamposter.jpg" controls preload="auto">
-          <source src='hls/netwar.m3u8' type="application/x-mpegURL">
+          <source src="hls/netwar.m3u8" type="application/x-mpegURL">
         </video-js>
 
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/video.js/8.0.4/video.min.js"></script>
-        <script>
-          let player = videojs('vid1', {
-          fluid: true
-          });
-          player.play();
-
-          function getHostname() {
-            let hostname = location.hostname;
-            document.getElementById("urlcode").innerHTML= hostname;
-          }
-        </script>
-      </div>
-      <div class="col-md-2"></div>
+        <div class="offline-overlay" id="offlineOverlay">
+          <svg class="offline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="7" width="20" height="15" rx="2" ry="2"/>
+            <polyline points="17 2 12 7 7 2"/>
+          </svg>
+          <span class="offline-text">Stream Offline</span>
+        </div>
       </div>
 
-    <div class="row">
-      <div class="col-md-2"></div>
-      <div class="col-md-8">
-        <br>
-        <button type="button" class="btn btn-success" data-toggle="collapse" data-target="#streamdata" onclick="getHostname()"><i class="fa fa-caret-square-down"></i> Export Stream</button>
-        <div class="card collapse" id="streamdata">
-          <div class="card-body rounded text-white bg-primary">
-            rtmp://<span id="urlcode"></span>/live/hls/netwar.m3u8
+      <div class="export-section">
+        <button class="export-toggle" id="exportToggle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+          Stream URLs
+        </button>
+
+        <div class="export-panel" id="exportPanel">
+          <div class="export-panel-inner">
+            <div class="export-urls">
+              <div class="url-row">
+                <div class="url-label">HLS</div>
+                <div class="url-value" id="hlsUrl"></div>
+                <button class="url-copy" data-target="hlsUrl" title="Copy">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="url-row">
+                <div class="url-label">RTMP</div>
+                <div class="url-value" id="rtmpUrl"></div>
+                <button class="url-copy" data-target="rtmpUrl" title="Copy">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      <div class="col-md-2"></div>
-    </div>
+    </main>
 
-    <div class="row">
-      <div class="col-md-2"></div>
-      <div class="mt-2 col-md-8">
-        <div class="footer">
-          Made with <span class="red"><i class="fas fa-heart"></i></span> by the NETWAR Staff
-        </div>
-      </div>
-      <div class="col-md-2"></div>
-    </div>
+    <footer class="footer">
+      Made with <span class="footer-heart">&hearts;</span> by the NETWAR Staff
+    </footer>
   </div>
-</body>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/video.js/8.0.4/video.min.js"></script>
+  <script>
+    (function () {
+      var player = videojs('vid1', { fluid: true });
+      var overlay = document.getElementById('offlineOverlay');
+      var dot = document.getElementById('statusDot');
+      var statusText = document.getElementById('statusText');
+      var isLive = false;
+
+      function setLive() {
+        if (isLive) return;
+        isLive = true;
+        overlay.classList.remove('visible');
+        dot.classList.remove('offline');
+        dot.classList.add('live');
+        statusText.textContent = 'Live';
+      }
+
+      function setOffline() {
+        if (!isLive && dot.classList.contains('offline')) return;
+        isLive = false;
+        overlay.classList.add('visible');
+        dot.classList.remove('live');
+        dot.classList.add('offline');
+        statusText.textContent = 'Offline';
+      }
+
+      player.on('playing', setLive);
+      player.on('loadeddata', setLive);
+
+      player.on('error', function () {
+        setOffline();
+        setTimeout(function () {
+          player.src({ src: 'hls/netwar.m3u8', type: 'application/x-mpegURL' });
+        }, 10000);
+      });
+
+      player.on('ended', setOffline);
+
+      setTimeout(function () {
+        if (!isLive) setOffline();
+      }, 5000);
+
+      // Export panel
+      var toggle = document.getElementById('exportToggle');
+      var panel = document.getElementById('exportPanel');
+      var host = location.hostname || 'localhost';
+      var port = location.port ? ':' + location.port : '';
+
+      document.getElementById('hlsUrl').textContent = 'http://' + host + port + '/hls/netwar.m3u8';
+      document.getElementById('rtmpUrl').textContent = 'rtmp://' + host + '/live';
+
+      toggle.addEventListener('click', function () {
+        var isOpen = panel.classList.toggle('open');
+        toggle.classList.toggle('open', isOpen);
+      });
+
+      document.querySelectorAll('.url-copy').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var target = document.getElementById(btn.dataset.target);
+          navigator.clipboard.writeText(target.textContent).then(function () {
+            btn.classList.add('copied');
+            var origSvg = btn.innerHTML;
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+            setTimeout(function () {
+              btn.classList.remove('copied');
+              btn.innerHTML = origSvg;
+            }, 1500);
+          });
+        });
+      });
+    })();
+  </script>
+</body>
 </html>

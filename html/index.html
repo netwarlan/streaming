@@ -536,9 +536,22 @@
         statusText.textContent = 'Offline';
       }
 
+      function setReady() {
+        dot.classList.remove('offline');
+        dot.className = 'status-dot';
+        statusText.textContent = 'Ready';
+      }
+
+      // Stream is playing
       player.on('playing', setLive);
       player.on('loadeddata', setLive);
 
+      // Stream source loaded successfully but waiting for user to press play
+      player.on('loadedmetadata', function () {
+        if (!isLive) setReady();
+      });
+
+      // Actual error (stream not available)
       player.on('error', function () {
         setOffline();
         setTimeout(function () {
@@ -547,10 +560,6 @@
       });
 
       player.on('ended', setOffline);
-
-      setTimeout(function () {
-        if (!isLive) setOffline();
-      }, 5000);
 
       // Export panel
       var toggle = document.getElementById('exportToggle');

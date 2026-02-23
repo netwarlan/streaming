@@ -14,7 +14,9 @@ docker run -p 80:80 -p 1935:1935 ghcr.io/netwarlan/streaming
 ```
 
 ### Stream to it
-Using OBS, set the stream URL to `rtmp://<server-ip>/live`. No stream key needed.
+Using OBS, configure the stream settings:
+- **Server**: `rtmp://<server-ip>/live`
+- **Stream Key**: `netwar`
 
 Visit `http://<server-ip>` in a browser to watch.
 
